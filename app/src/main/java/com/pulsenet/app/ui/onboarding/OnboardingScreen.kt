@@ -43,6 +43,7 @@ private val runtimePermissions: Array<String> = buildList {
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         add(android.Manifest.permission.POST_NOTIFICATIONS)
+        add(android.Manifest.permission.NEARBY_WIFI_DEVICES)
     }
 }.toTypedArray()
 

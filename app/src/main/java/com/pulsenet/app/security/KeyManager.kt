@@ -3,6 +3,7 @@ package com.pulsenet.app.security
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.KeyPairGenerator
 import java.security.KeyStore
@@ -42,6 +43,7 @@ class KeyManager @Inject constructor(
         const val AES_WRAP_ALIAS = "pulsenet_key_wrap_aes"
         const val ED25519_RAW_KEY_LENGTH = 32
         const val ED25519_ALGORITHM = "Ed25519"
+        const val TAG = "KeyManager"
     }
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -59,7 +61,18 @@ class KeyManager @Inject constructor(
 
     override fun sign(payload: ByteArray): ByteArray =
         when (prefs.getString(PREF_BACKING, null)) {
-            BACKING_KEYSTORE -> signWithKeystore(payload)
+            BACKING_KEYSTORE -> try {
+                signWithKeystore(payload)
+            } catch (e: Exception) {
+                // A keystore identity that passed its generation-time probe can still
+                // fail later (OS upgrade, key invalidation). Regenerating a software
+                // identity beats leaving the user unable to send anything at all —
+                // safe because every message embeds its own sender public key, so
+                // already-sent messages stay verifiable under the previous one.
+                Log.w(TAG, "Keystore signing failed; regenerating software identity", e)
+                generateBouncyCastleIdentity()
+                Ed25519Crypto.sign(bouncyCastlePrivateKey(), payload)
+            }
             else -> Ed25519Crypto.sign(bouncyCastlePrivateKey(), payload)
         }
 
@@ -76,31 +89,54 @@ class KeyManager @Inject constructor(
         }
     }
 
-    private fun tryGenerateKeystoreIdentity(): Boolean = try {
-        // AndroidKeyStore does not expose a KeyProperties constant for Ed25519 (no public
-        // API support as of API 34), so this is attempted via the raw JCA algorithm name.
-        // It reliably throws on real devices today, which is exactly why the Bouncy Castle
-        // fallback below exists.
-        val generator = KeyPairGenerator.getInstance(ED25519_ALGORITHM, ANDROID_KEYSTORE)
-        val spec = KeyGenParameterSpec.Builder(
-            IDENTITY_ALIAS,
-            KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
-        ).build()
-        generator.initialize(spec)
-        val keyPair = generator.generateKeyPair()
-        val rawPublicKey = extractRawEd25519PublicKey(keyPair.public.encoded)
-        prefs.edit()
-            .putString(PREF_PUBLIC_KEY, Base64.getEncoder().encodeToString(rawPublicKey))
-            .putString(PREF_BACKING, BACKING_KEYSTORE)
-            .apply()
-        true
+    private fun tryGenerateKeystoreIdentity(): Boolean {
+        return try {
+            // AndroidKeyStore exposes no KeyProperties constant for Ed25519, so this goes
+            // through the raw JCA algorithm name. Newer Android versions do support it;
+            // older ones throw here and fall through to the Bouncy Castle path below.
+            val generator = KeyPairGenerator.getInstance(ED25519_ALGORITHM, ANDROID_KEYSTORE)
+            val spec = KeyGenParameterSpec.Builder(
+                IDENTITY_ALIAS,
+                KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY
+            ).build()
+            generator.initialize(spec)
+            val keyPair = generator.generateKeyPair()
+            val rawPublicKey = extractRawEd25519PublicKey(keyPair.public.encoded)
+
+            // Generating a key proves nothing on its own — a device can support Ed25519
+            // keygen and still fail at signing time, or return a public key encoding that
+            // doesn't match what peers would verify against. Exercise the whole path once
+            // here and fall back to software keys unless a real signature verifies, rather
+            // than discovering it later when a message fails to send.
+            if (keystoreSigningWorks(rawPublicKey)) {
+                prefs.edit()
+                    .putString(PREF_PUBLIC_KEY, Base64.getEncoder().encodeToString(rawPublicKey))
+                    .putString(PREF_BACKING, BACKING_KEYSTORE)
+                    .apply()
+                true
+            } else {
+                runCatching { keyStore.deleteEntry(IDENTITY_ALIAS) }
+                false
+            }
+        } catch (e: Exception) {
+            runCatching { keyStore.deleteEntry(IDENTITY_ALIAS) }
+            false
+        }
+    }
+
+    private fun keystoreSigningWorks(rawPublicKey: ByteArray): Boolean = try {
+        val probe = "pulsenet-keystore-probe".toByteArray()
+        Ed25519Crypto.verify(rawPublicKey, probe, signWithKeystore(probe))
     } catch (e: Exception) {
         false
     }
 
     private fun signWithKeystore(payload: ByteArray): ByteArray {
         val privateKey = keyStore.getKey(IDENTITY_ALIAS, null) as PrivateKey
-        return Signature.getInstance(ED25519_ALGORITHM).apply {
+        // The provider must be named explicitly: without it JCA picks whichever
+        // provider claims Ed25519 first (Conscrypt), which can't operate on an
+        // opaque AndroidKeyStore key handle and throws on initSign.
+        return Signature.getInstance(ED25519_ALGORITHM, ANDROID_KEYSTORE).apply {
             initSign(privateKey)
             update(payload)
         }.sign()

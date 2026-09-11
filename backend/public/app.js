@@ -6,8 +6,11 @@ const PRIORITY_COLORS = {
 };
 
 const map = L.map('map', { zoomControl: true }).setView([26.9124, 75.7873], 13);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+// CARTO's free anonymous dark tiles now require an API key, so this uses plain
+// OpenStreetMap tiles (always free, no key) and fakes the dark look with a CSS
+// filter on the tile pane in style.css instead.
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
   maxZoom: 19
 }).addTo(map);
 
