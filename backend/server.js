@@ -34,8 +34,22 @@ function broadcast(payload) {
   });
 }
 
+// A transient Atlas blip (flaky Wi-Fi, cluster failover) surfaces as an async
+// driver error with no handler attached, which would take the whole dashboard
+// down mid-demo. Log and keep serving instead — the driver reconnects on its own.
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection (continuing):', err?.message || err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception (continuing):', err?.message || err);
+});
+
 async function main() {
-  const client = new MongoClient(MONGO_URI);
+  const client = new MongoClient(MONGO_URI, {
+    serverSelectionTimeoutMS: 10000,
+    retryWrites: true,
+    retryReads: true
+  });
   await client.connect();
   const db = client.db(DB_NAME);
   const messages = db.collection(COLLECTION_NAME);
@@ -104,14 +118,24 @@ async function main() {
   // Change Streams need a replica set — Atlas clusters (including the free M0
   // tier) always are one, so this works in production; a bare standalone
   // mongod locally would not support it, hence the guard.
-  try {
-    const changeStream = messages.watch([{ $match: { operationType: 'insert' } }]);
-    changeStream.on('change', (change) => {
-      broadcast({ type: 'NEW_MESSAGE', message: change.fullDocument });
-    });
-  } catch (err) {
-    console.warn('Change Streams unavailable — falling back to bulk-endpoint broadcasts only.', err.message);
+  // An 'error' event with no listener would be fatal to the process, so this
+  // always attaches one and re-establishes the stream after a drop.
+  function watchForInserts() {
+    try {
+      const changeStream = messages.watch([{ $match: { operationType: 'insert' } }]);
+      changeStream.on('change', (change) => {
+        broadcast({ type: 'NEW_MESSAGE', message: change.fullDocument });
+      });
+      changeStream.on('error', (err) => {
+        console.warn('Change stream error, re-establishing in 5s:', err.message);
+        changeStream.close().catch(() => {});
+        setTimeout(watchForInserts, 5000);
+      });
+    } catch (err) {
+      console.warn('Change Streams unavailable — falling back to bulk-endpoint broadcasts only.', err.message);
+    }
   }
+  watchForInserts();
 
   server.listen(PORT, () => {
     console.log(`PulseNet Rescue Dashboard running on http://localhost:${PORT}`);
