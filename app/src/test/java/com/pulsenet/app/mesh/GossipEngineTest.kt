@@ -4,6 +4,7 @@ import com.pulsenet.app.data.local.entity.MessageEntity
 import com.pulsenet.app.security.Ed25519Crypto
 import com.pulsenet.app.security.KeySigner
 import com.pulsenet.app.security.MessageSigner
+import com.pulsenet.app.worker.SyncTrigger
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,6 +21,7 @@ class GossipEngineTest {
     private lateinit var messageSigner: MessageSigner
     private lateinit var gossipEngine: GossipEngine
     private lateinit var senderPublicKey: String
+    private var syncScheduleCount = 0
 
     private val moshi = Moshi.Builder().build()
     private val hashListAdapter = moshi.adapter(HashListPayload::class.java)
@@ -38,7 +40,9 @@ class GossipEngineTest {
         messageSigner = MessageSigner(keySigner)
         dao = FakeMessageDao()
         transport = FakeMeshTransport()
-        gossipEngine = GossipEngine(transport, dao, messageSigner)
+        syncScheduleCount = 0
+        val syncTrigger = SyncTrigger { syncScheduleCount++ }
+        gossipEngine = GossipEngine(transport, dao, messageSigner, syncTrigger)
     }
 
     private fun signedMessage(
@@ -117,6 +121,19 @@ class GossipEngineTest {
     }
 
     @Test
+    fun messageBatchWithNewMessageSchedulesCloudSync() = runTest {
+        // A message relayed in over Bluetooth needs to trigger a sync attempt on
+        // its own — BridgeManager only fires on a *new* connectivity transition,
+        // so a device that's already online would otherwise never flush it.
+        val wireMessage = signedMessage("msg-1").toWireMessage()
+        val batchJson = messageBatchAdapter.toJson(MessageBatchPayload(messages = listOf(wireMessage)))
+
+        gossipEngine.processIncoming("peer-1", batchJson.toByteArray())
+
+        assertEquals(1, syncScheduleCount)
+    }
+
+    @Test
     fun messageBatchDropsMessageAtMaxHopCount() = runTest {
         val wireMessage = signedMessage("msg-1", hopCount = 7, maxHops = 7).toWireMessage()
         val batchJson = messageBatchAdapter.toJson(MessageBatchPayload(messages = listOf(wireMessage)))
@@ -147,6 +164,7 @@ class GossipEngineTest {
         gossipEngine.processIncoming("peer-1", batchJson.toByteArray())
 
         assertEquals(1, dao.getMessageById("msg-1")?.hopCount)
+        assertEquals(0, syncScheduleCount)
     }
 
     @Test

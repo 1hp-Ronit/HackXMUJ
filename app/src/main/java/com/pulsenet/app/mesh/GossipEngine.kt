@@ -4,6 +4,7 @@ import android.util.Log
 import com.pulsenet.app.data.local.dao.MessageDao
 import com.pulsenet.app.data.local.entity.MessageEntity
 import com.pulsenet.app.security.MessageSigner
+import com.pulsenet.app.worker.SyncTrigger
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +26,8 @@ import javax.inject.Singleton
 class GossipEngine @Inject constructor(
     private val transport: MeshTransport,
     private val messageDao: MessageDao,
-    private val messageSigner: MessageSigner
+    private val messageSigner: MessageSigner,
+    private val syncTrigger: SyncTrigger
 ) : MeshEventListener {
 
     private companion object {
@@ -103,6 +105,7 @@ class GossipEngine @Inject constructor(
 
     private suspend fun handleMessageBatch(json: String) {
         val incoming = messageBatchAdapter.fromJson(json)?.messages ?: return
+        var insertedAny = false
         for (wireMessage in incoming) {
             if (wireMessage.hopCount >= wireMessage.maxHops) continue // TTL exhausted
 
@@ -112,8 +115,18 @@ class GossipEngine @Inject constructor(
                 continue
             }
             // insertMessage IGNOREs on duplicate messageId, so re-broadcasts already
-            // seen elsewhere in the mesh are deduped here for free.
-            messageDao.insertMessage(entity.copy(hopCount = entity.hopCount + 1))
+            // seen elsewhere in the mesh are deduped here for free. insertMessage
+            // returns -1 on that conflict, so this only counts genuinely new rows.
+            val rowId = messageDao.insertMessage(entity.copy(hopCount = entity.hopCount + 1))
+            if (rowId != -1L) insertedAny = true
+        }
+        // BridgeManager only schedules a flush on a *new* connectivity transition —
+        // a message relayed in over Bluetooth while this device is already online
+        // would otherwise sit unsynced until the next Wi-Fi toggle. Scheduling here
+        // covers exactly that case; WorkManager's CONNECTED constraint makes this a
+        // no-op if there's genuinely no internet yet.
+        if (insertedAny) {
+            syncTrigger.scheduleFlush()
         }
     }
 

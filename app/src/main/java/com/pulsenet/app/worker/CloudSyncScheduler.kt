@@ -18,12 +18,12 @@ import javax.inject.Singleton
 @Singleton
 class CloudSyncScheduler @Inject constructor(
     @ApplicationContext private val context: Context
-) {
+) : SyncTrigger {
     private companion object {
         const val WORK_NAME = "bridge_flush"
     }
 
-    fun scheduleFlush() {
+    override fun scheduleFlush() {
         val request = OneTimeWorkRequestBuilder<BridgeFlushWorker>()
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()

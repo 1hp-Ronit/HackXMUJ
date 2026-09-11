@@ -4,6 +4,8 @@ import com.pulsenet.app.mesh.MeshTransport
 import com.pulsenet.app.mesh.NearbyMeshManager
 import com.pulsenet.app.security.KeyManager
 import com.pulsenet.app.security.KeySigner
+import com.pulsenet.app.worker.CloudSyncScheduler
+import com.pulsenet.app.worker.SyncTrigger
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,4 +20,7 @@ abstract class AppModule {
 
     @Binds
     abstract fun bindMeshTransport(nearbyMeshManager: NearbyMeshManager): MeshTransport
+
+    @Binds
+    abstract fun bindSyncTrigger(cloudSyncScheduler: CloudSyncScheduler): SyncTrigger
 }
