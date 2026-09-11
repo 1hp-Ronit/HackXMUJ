@@ -149,6 +149,29 @@ class GossipEngineTest {
         assertEquals(1, dao.getMessageById("msg-1")?.hopCount)
     }
 
+    @Test
+    fun broadcastOwnMessageSendsToAllConnectedPeers() = runTest {
+        transport.connectedEndpointIds.addAll(listOf("peer-1", "peer-2"))
+        val message = signedMessage("sos-1", priority = 0)
+
+        gossipEngine.broadcastOwnMessage(message)
+
+        val batchAtPeer1 = messageBatchAdapter.fromJson(transport.lastPayloadJsonTo("peer-1"))!!
+        val batchAtPeer2 = messageBatchAdapter.fromJson(transport.lastPayloadJsonTo("peer-2"))!!
+        assertEquals(listOf("sos-1"), batchAtPeer1.messages.map { it.messageId })
+        assertEquals(listOf("sos-1"), batchAtPeer2.messages.map { it.messageId })
+    }
+
+    @Test
+    fun broadcastOwnMessageAtMaxHopsSendsNothing() = runTest {
+        transport.connectedEndpointIds.add("peer-1")
+        val message = signedMessage("sos-1", hopCount = 7, maxHops = 7)
+
+        gossipEngine.broadcastOwnMessage(message)
+
+        assertTrue(transport.sentPayloads.isEmpty())
+    }
+
     private fun MessageEntity.toWireMessage() = WireMessage(
         messageId = messageId,
         senderPublicKey = senderPublicKey,

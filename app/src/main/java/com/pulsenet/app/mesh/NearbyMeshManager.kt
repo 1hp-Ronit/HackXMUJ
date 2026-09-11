@@ -94,7 +94,7 @@ class NearbyMeshManager @Inject constructor(
             .addOnFailureListener { e -> Log.w(TAG, "sendPayload to $endpointId failed", e) }
     }
 
-    fun sendPayloadToAll(bytes: ByteArray) {
+    override fun sendPayloadToAll(bytes: ByteArray) {
         _connectedPeers.value.keys.forEach { endpointId -> sendPayload(endpointId, bytes) }
     }
 

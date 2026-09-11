@@ -52,6 +52,20 @@ class GossipEngine @Inject constructor(
         scope.launch { processIncoming(endpointId, payload) }
     }
 
+    /**
+     * Pushes a just-created local message to every currently connected peer right
+     * away, instead of waiting for the next HASH_LIST sync round. Used for SOS and
+     * user-composed messages, where an extra sync-cycle delay is undesirable.
+     * Safe to call with zero connected peers: the message still sits in Room ready
+     * for the next peer that connects.
+     */
+    suspend fun broadcastOwnMessage(message: MessageEntity) {
+        val outgoing = prepareOutgoing(listOf(message))
+        if (outgoing.isEmpty()) return
+        val json = messageBatchAdapter.toJson(MessageBatchPayload(messages = outgoing))
+        transport.sendPayloadToAll(json.toByteArray())
+    }
+
     suspend fun syncWith(endpointId: String) {
         val localIds = messageDao.getAllMessageIds()
         val json = hashListAdapter.toJson(HashListPayload(messageIds = localIds))

@@ -7,4 +7,5 @@ package com.pulsenet.app.mesh
  */
 interface MeshTransport {
     fun sendPayload(endpointId: String, bytes: ByteArray)
+    fun sendPayloadToAll(bytes: ByteArray)
 }
