@@ -9,10 +9,14 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.pulsenet.app.R
 import com.pulsenet.app.data.local.UserPreferences
 import com.pulsenet.app.data.local.dao.MessageDao
 import com.pulsenet.app.sensor.DistressSensorManager
+import com.pulsenet.app.worker.EvictionWorker
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +25,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
@@ -53,11 +58,21 @@ class MeshService : Service() {
         nearbyMeshManager.listener = gossipEngine
         distressSensorManager.start()
         bridgeManager.start()
+        scheduleEvictionWorker()
 
         serviceScope.launch {
             nearbyMeshManager.start(userPreferences.getAliasSnapshot())
         }
         observeMeshState()
+    }
+
+    private fun scheduleEvictionWorker() {
+        val request = PeriodicWorkRequestBuilder<EvictionWorker>(6, TimeUnit.HOURS).build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "eviction_triage",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
