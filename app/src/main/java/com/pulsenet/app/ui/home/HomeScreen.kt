@@ -11,6 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,6 +28,7 @@ import com.pulsenet.app.ui.theme.TextPrimary
 fun HomeScreen(
     onNavigateToSOS: () -> Unit,
     onNavigateToMessages: () -> Unit,
+    onNavigateToMap: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -66,6 +68,10 @@ fun HomeScreen(
             ) {
                 Text("💬 Messages", style = MaterialTheme.typography.titleLarge)
             }
+        }
+
+        TextButton(onClick = onNavigateToMap, modifier = Modifier.fillMaxWidth()) {
+            Text("🗺 View Mesh Map", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

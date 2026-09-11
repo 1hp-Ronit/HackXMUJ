@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.pulsenet.app.ui.home.HomeScreen
+import com.pulsenet.app.ui.map.MeshMapScreen
 import com.pulsenet.app.ui.messages.MessagesScreen
 import com.pulsenet.app.ui.onboarding.OnboardingScreen
 import com.pulsenet.app.ui.onboarding.OnboardingViewModel
@@ -63,7 +64,8 @@ private fun PulseNetNavHost(navController: NavHostController = rememberNavContro
         composable(Screen.Home.route) {
             HomeScreen(
                 onNavigateToSOS = { navController.navigate(Screen.SOS.route) },
-                onNavigateToMessages = { navController.navigate(Screen.Messages.route) }
+                onNavigateToMessages = { navController.navigate(Screen.Messages.route) },
+                onNavigateToMap = { navController.navigate(Screen.Map.route) }
             )
         }
         composable(Screen.SOS.route) {
@@ -71,6 +73,9 @@ private fun PulseNetNavHost(navController: NavHostController = rememberNavContro
         }
         composable(Screen.Messages.route) {
             MessagesScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Screen.Map.route) {
+            MeshMapScreen(onBack = { navController.popBackStack() })
         }
     }
 }
