@@ -12,12 +12,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.work.Constraints
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import com.pulsenet.app.worker.BridgeFlushWorker
+import com.pulsenet.app.worker.CloudSyncScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,11 +23,11 @@ import javax.inject.Singleton
  */
 @Singleton
 class BridgeManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val cloudSyncScheduler: CloudSyncScheduler
 ) {
     private companion object {
         const val TAG = "BridgeManager"
-        const val WORK_NAME = "bridge_flush"
         const val SYNC_NOTIFICATION_ID = 2
     }
 
@@ -45,7 +40,7 @@ class BridgeManager @Inject constructor(
             if (capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true) {
                 Log.i(TAG, "Internet connectivity detected — enqueuing cloud sync flush")
                 showSyncStartedNotification()
-                enqueueFlush()
+                cloudSyncScheduler.scheduleFlush()
             }
         }
     }
@@ -59,13 +54,6 @@ class BridgeManager @Inject constructor(
 
     fun stop() {
         runCatching { connectivityManager.unregisterNetworkCallback(networkCallback) }
-    }
-
-    private fun enqueueFlush() {
-        val request = OneTimeWorkRequestBuilder<BridgeFlushWorker>()
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .build()
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
     private fun showSyncStartedNotification() {

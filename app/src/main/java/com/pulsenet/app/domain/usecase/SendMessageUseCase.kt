@@ -6,6 +6,7 @@ import com.pulsenet.app.domain.model.Priority
 import com.pulsenet.app.mesh.GossipEngine
 import com.pulsenet.app.security.KeySigner
 import com.pulsenet.app.security.MessageSigner
+import com.pulsenet.app.worker.CloudSyncScheduler
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,7 +21,8 @@ class SendMessageUseCase @Inject constructor(
     private val messageDao: MessageDao,
     private val messageSigner: MessageSigner,
     private val keySigner: KeySigner,
-    private val gossipEngine: GossipEngine
+    private val gossipEngine: GossipEngine,
+    private val cloudSyncScheduler: CloudSyncScheduler
 ) {
     suspend operator fun invoke(
         content: String,
@@ -50,6 +52,10 @@ class SendMessageUseCase @Inject constructor(
 
         messageDao.insertMessage(entity)
         gossipEngine.broadcastOwnMessage(entity)
+        // BridgeManager only reacts to connectivity *changes*, so without this a
+        // message composed while already online would sit unsynced until the next
+        // network transition.
+        cloudSyncScheduler.scheduleFlush()
         return entity
     }
 }

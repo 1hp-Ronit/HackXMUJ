@@ -36,8 +36,15 @@
         android:name="android.hardware.bluetooth_le"
         android:required="false" />
 
+    <!--
+      The rescue-dashboard backend runs on the local network over plain HTTP
+      (see BACKEND_BASE_URL in local.properties), which Android blocks by default
+      from targetSdk 28 onward. A real deployment would terminate TLS at the
+      backend and drop this.
+    -->
     <application
         android:name=".PulseNetApp"
+        android:usesCleartextTraffic="true"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
