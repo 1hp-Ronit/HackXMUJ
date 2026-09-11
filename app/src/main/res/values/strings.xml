@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">PulseNet</string>
+    <string name="mesh_service_channel_name">PulseNet Mesh</string>
+    <string name="mesh_service_notification_title">PulseNet Active</string>
+</resources>
