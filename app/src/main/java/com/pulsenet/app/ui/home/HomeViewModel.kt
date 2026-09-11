@@ -28,7 +28,7 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    nearbyMeshManager: NearbyMeshManager,
+    private val nearbyMeshManager: NearbyMeshManager,
     messageDao: MessageDao
 ) : ViewModel() {
 
@@ -41,6 +41,11 @@ class HomeViewModel @Inject constructor(
 
     fun ensureMeshServiceRunning() {
         ContextCompat.startForegroundService(context, Intent(context, MeshService::class.java))
+    }
+
+    /** Manual discovery burst — natural windows are 30s every 5 min per device, which can leave nearby phones out of sync for minutes. */
+    fun scanNow() {
+        nearbyMeshManager.forceDiscoveryBurst()
     }
 
     private fun currentBatteryPercent(): Int {

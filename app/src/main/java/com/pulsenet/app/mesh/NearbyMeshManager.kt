@@ -89,6 +89,18 @@ class NearbyMeshManager @Inject constructor(
         restartDutyCycle()
     }
 
+    /**
+     * Kicks off an immediate discovery burst instead of waiting for the next
+     * duty-cycled window. Natural windows are only 30s every 5 minutes and start
+     * whenever each device's MeshService happened to launch, so two phones sitting
+     * side by side can easily have non-overlapping windows for minutes — this is
+     * a manual escape hatch for testing/demoing without waiting that out.
+     */
+    fun forceDiscoveryBurst() {
+        if (sosOverrideActive) return // already continuous
+        restartDutyCycle()
+    }
+
     override fun sendPayload(endpointId: String, bytes: ByteArray) {
         connectionsClient.sendPayload(endpointId, Payload.fromBytes(bytes))
             .addOnFailureListener { e -> Log.w(TAG, "sendPayload to $endpointId failed", e) }

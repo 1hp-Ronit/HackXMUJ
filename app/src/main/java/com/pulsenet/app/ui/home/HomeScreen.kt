@@ -59,6 +59,13 @@ fun HomeScreen(
             Text("${state.batteryPercent}%", color = TextDim, style = MaterialTheme.typography.bodyMedium)
         }
 
+        // Natural discovery windows are 30s every 5 min per device and start
+        // whenever that device's app happened to launch, so two phones side by
+        // side can go minutes before their windows overlap — this forces one now.
+        TextButton(onClick = { viewModel.scanNow() }, modifier = Modifier.padding(top = 2.dp)) {
+            Text("⟳ Scan Now", color = TextDim, style = MaterialTheme.typography.bodySmall)
+        }
+
         PulseRadar(
             peerIds = state.peers.map { it.endpointId },
             modifier = Modifier
