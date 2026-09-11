@@ -2,6 +2,7 @@ package com.pulsenet.app.di
 
 import com.pulsenet.app.BuildConfig
 import com.pulsenet.app.data.remote.AtlasApiService
+import com.pulsenet.app.data.remote.SarvamApiService
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -44,4 +45,14 @@ object NetworkModule {
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
             .create(AtlasApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideSarvamApiService(moshi: Moshi, okHttpClient: OkHttpClient): SarvamApiService =
+        Retrofit.Builder()
+            .baseUrl("${BuildConfig.SARVAM_BASE_URL}/")
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+            .create(SarvamApiService::class.java)
 }
