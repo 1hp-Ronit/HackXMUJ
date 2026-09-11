@@ -200,4 +200,5 @@ BLE links, SOS broadcast) can only be verified on physical hardware — see
 
 - Ronit Kumar
 - Aditya Negi
-- Mayank 
+- Mayank Singh Pargai
+- Vivek Kumar Singh
