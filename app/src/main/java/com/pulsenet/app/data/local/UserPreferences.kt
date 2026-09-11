@@ -24,7 +24,6 @@ class UserPreferences @Inject constructor(
         const val DEFAULT_ALIAS = "PulseNet User"
         private val KEY_ALIAS = stringPreferencesKey("user_alias")
         private val KEY_ONBOARDING_DONE = booleanPreferencesKey("onboarding_complete")
-        private val KEY_DEMO_DATA_SEEDED = booleanPreferencesKey("demo_data_seeded")
     }
 
     private val dataStore get() = context.pulseNetDataStore
@@ -40,11 +39,5 @@ class UserPreferences @Inject constructor(
 
     suspend fun setOnboardingComplete(complete: Boolean) {
         dataStore.edit { it[KEY_ONBOARDING_DONE] = complete }
-    }
-
-    suspend fun isDemoDataSeeded(): Boolean = dataStore.data.map { it[KEY_DEMO_DATA_SEEDED] ?: false }.first()
-
-    suspend fun setDemoDataSeeded(seeded: Boolean) {
-        dataStore.edit { it[KEY_DEMO_DATA_SEEDED] = seeded }
     }
 }

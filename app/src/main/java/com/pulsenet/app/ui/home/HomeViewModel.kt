@@ -6,6 +6,7 @@ import android.os.BatteryManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pulsenet.app.data.local.DemoSeeder
 import com.pulsenet.app.data.local.dao.MessageDao
 import com.pulsenet.app.domain.model.PeerNode
 import com.pulsenet.app.mesh.MeshService
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeUiState(
@@ -29,6 +31,7 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val nearbyMeshManager: NearbyMeshManager,
+    private val demoSeeder: DemoSeeder,
     messageDao: MessageDao
 ) : ViewModel() {
 
@@ -46,6 +49,11 @@ class HomeViewModel @Inject constructor(
     /** Manual discovery burst — natural windows are 30s every 5 min per device, which can leave nearby phones out of sync for minutes. */
     fun scanNow() {
         nearbyMeshManager.forceDiscoveryBurst()
+    }
+
+    /** Manual, debug-only demo data load — no-ops if Room already has messages. */
+    fun loadDemoData() {
+        viewModelScope.launch { demoSeeder.seedForDemo() }
     }
 
     private fun currentBatteryPercent(): Int {

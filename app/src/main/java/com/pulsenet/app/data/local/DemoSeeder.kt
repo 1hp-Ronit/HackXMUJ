@@ -8,16 +8,19 @@ import kotlin.random.Random
 
 /**
  * Seeds a realistic disaster-scenario dataset around the MUJ campus so the mesh
- * map and rescue dashboard aren't empty on first launch. Runs once (gated by a
- * DataStore flag) and only if the vault is actually empty, so it never
- * overwrites real mesh traffic. Seed messages carry a placeholder signature —
- * they're written directly to Room, bypassing GossipEngine's verify step
- * entirely, so there's no need to sign them with a real keypair.
+ * map and rescue dashboard have something to show for a demo/pitch. Manual only
+ * (triggered from a debug-only button on Home) — this used to auto-run on first
+ * launch, but about half the seed messages start unsynced, so they kept getting
+ * silently re-uploaded on every Bridge flush even after someone cleared the
+ * cloud database expecting a clean slate. Only inserts if Room is actually
+ * empty, so it never overwrites real mesh traffic. Seed messages carry a
+ * placeholder signature — they're written directly to Room, bypassing
+ * GossipEngine's verify step entirely, so there's no need to sign them with a
+ * real keypair.
  */
 @Singleton
 class DemoSeeder @Inject constructor(
-    private val messageDao: MessageDao,
-    private val userPreferences: UserPreferences
+    private val messageDao: MessageDao
 ) {
     private companion object {
         const val SEED_SIGNATURE = "seed-data-unsigned"
@@ -25,14 +28,11 @@ class DemoSeeder @Inject constructor(
         const val BASE_LNG = 75.5650
     }
 
-    suspend fun seedIfNeeded() {
-        if (userPreferences.isDemoDataSeeded()) return
-        if (messageDao.getMessageCount() > 0) {
-            userPreferences.setDemoDataSeeded(true)
-            return
-        }
+    /** Returns true if it actually seeded — false if Room already had messages. */
+    suspend fun seedForDemo(): Boolean {
+        if (messageDao.getMessageCount() > 0) return false
         messageDao.insertMessages(buildDemoMessages())
-        userPreferences.setDemoDataSeeded(true)
+        return true
     }
 
     private fun buildDemoMessages(): List<MessageEntity> {

@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pulsenet.app.BuildConfig
 import com.pulsenet.app.ui.components.PulseRadar
 import com.pulsenet.app.ui.theme.BorderSubtle
 import com.pulsenet.app.ui.theme.SOSRed
@@ -59,11 +60,18 @@ fun HomeScreen(
             Text("${state.batteryPercent}%", color = TextDim, style = MaterialTheme.typography.bodyMedium)
         }
 
-        // Natural discovery windows are 30s every 5 min per device and start
-        // whenever that device's app happened to launch, so two phones side by
-        // side can go minutes before their windows overlap — this forces one now.
-        TextButton(onClick = { viewModel.scanNow() }, modifier = Modifier.padding(top = 2.dp)) {
-            Text("⟳ Scan Now", color = TextDim, style = MaterialTheme.typography.bodySmall)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Natural discovery windows are 30s every 5 min per device and start
+            // whenever that device's app happened to launch, so two phones side
+            // by side can go minutes before their windows overlap — force one now.
+            TextButton(onClick = { viewModel.scanNow() }) {
+                Text("⟳ Scan Now", color = TextDim, style = MaterialTheme.typography.bodySmall)
+            }
+            if (BuildConfig.DEBUG) {
+                TextButton(onClick = { viewModel.loadDemoData() }) {
+                    Text("Load Demo Data", color = TextDim, style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
 
         PulseRadar(
