@@ -156,17 +156,24 @@ class NearbyMeshManager @Inject constructor(
         }
     }
 
+    // ConnectionInfo (which carries the peer's advertised alias) is only handed to
+    // onConnectionInitiated, not onConnectionResult — bridge it across the handshake
+    // rather than falling back to the opaque endpointId as the displayed name.
+    private val pendingEndpointNames = mutableMapOf<String, String>()
+
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
+            pendingEndpointNames[endpointId] = info.endpointName
             // Disaster scenario: auto-accept, no pairing UI friction.
             connectionsClient.acceptConnection(endpointId, payloadCallback)
         }
 
         override fun onConnectionResult(endpointId: String, resolution: ConnectionResolution) {
+            val alias = pendingEndpointNames.remove(endpointId) ?: endpointId
             if (resolution.status.isSuccess) {
                 val peer = PeerNode(
                     endpointId = endpointId,
-                    alias = endpointId,
+                    alias = alias,
                     connectedAtEpochMs = System.currentTimeMillis()
                 )
                 _connectedPeers.update { it + (endpointId to peer) }

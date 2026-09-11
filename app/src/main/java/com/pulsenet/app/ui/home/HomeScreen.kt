@@ -9,13 +9,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -24,6 +30,7 @@ import com.pulsenet.app.ui.theme.PulseBlue
 import com.pulsenet.app.ui.theme.SOSRed
 import com.pulsenet.app.ui.theme.TextPrimary
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToSOS: () -> Unit,
@@ -32,16 +39,20 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    var showPeerSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     LaunchedEffect(Unit) { viewModel.ensureMeshServiceRunning() }
 
     Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                "${state.peers.size} peers • ${state.messageCount} messages",
-                color = TextPrimary,
-                style = MaterialTheme.typography.bodyLarge
-            )
+            TextButton(onClick = { showPeerSheet = true }) {
+                Text(
+                    "${state.peers.size} peers • ${state.messageCount} messages",
+                    color = TextPrimary,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
             Text("⚡ ${state.batteryPercent}%", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
         }
 
@@ -72,6 +83,12 @@ fun HomeScreen(
 
         TextButton(onClick = onNavigateToMap, modifier = Modifier.fillMaxWidth()) {
             Text("🗺 View Mesh Map", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+
+    if (showPeerSheet) {
+        ModalBottomSheet(onDismissRequest = { showPeerSheet = false }, sheetState = sheetState) {
+            PeerListSheet(peers = state.peers)
         }
     }
 }
