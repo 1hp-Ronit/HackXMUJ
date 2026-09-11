@@ -17,6 +17,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const markerLayer = L.layerGroup().addTo(map);
 const heatLayer = L.heatLayer([], { radius: 30, blur: 20 }).addTo(map);
 const seenMessageIds = new Set();
+const plottedLatLngs = [];
 
 function iconFor(priority) {
   const color = PRIORITY_COLORS[priority] ?? PRIORITY_COLORS[3];
@@ -45,16 +46,26 @@ function addMessageToMap(msg) {
   if (!msg.messageId || seenMessageIds.has(msg.messageId)) return;
   seenMessageIds.add(msg.messageId);
 
+  if (msg.priority === 0) prependSosFeed(msg);
+  prependTicker(msg);
+
   const coords = msg.location && msg.location.coordinates;
   if (!coords || coords.length !== 2) return;
   const [lng, lat] = coords;
+  // [0,0] means the sender never got a GPS fix; plotting it would drop a
+  // phantom pin in the Atlantic and drag the auto-fit bounds with it.
+  if (lng === 0 && lat === 0) return;
 
   const marker = L.marker([lat, lng], { icon: iconFor(msg.priority) }).bindPopup(popupHtml(msg));
   markerLayer.addLayer(marker);
   heatLayer.addLatLng([lat, lng, msg.priority === 0 ? 1 : 0.4]);
+  plottedLatLngs.push([lat, lng]);
+}
 
-  if (msg.priority === 0) prependSosFeed(msg);
-  prependTicker(msg);
+/** Frames the map on wherever messages actually are, instead of a hardcoded guess. */
+function fitToPlottedMessages() {
+  if (plottedLatLngs.length === 0) return;
+  map.fitBounds(L.latLngBounds(plottedLatLngs), { padding: [50, 50], maxZoom: 15 });
 }
 
 function prependSosFeed(msg) {
@@ -91,6 +102,7 @@ async function loadInitialMessages() {
     const res = await fetch('/api/messages?limit=500');
     const messages = await res.json();
     messages.forEach(addMessageToMap);
+    fitToPlottedMessages();
   } catch (err) {
     console.error('Failed to load messages', err);
   }
