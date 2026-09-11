@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,8 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.pulsenet.app.ui.theme.BorderSubtle
 import com.pulsenet.app.ui.theme.PulseBlue
 import com.pulsenet.app.ui.theme.SOSRed
+import com.pulsenet.app.ui.theme.TextDim
 import com.pulsenet.app.ui.theme.TextPrimary
 
 private val runtimePermissions: Array<String> = buildList {
@@ -80,10 +84,13 @@ fun OnboardingScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = TextPrimary
         )
-        Button(
+        OutlinedButton(
             onClick = { permissionLauncher.launch(runtimePermissions) },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PulseBlue)
+            border = BorderStroke(1.dp, if (permissionsGranted) PulseBlue else BorderSubtle),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = if (permissionsGranted) PulseBlue else TextPrimary
+            )
         ) {
             Text(if (permissionsGranted) "Permissions granted ✓" else "Grant Permissions")
         }
@@ -94,10 +101,11 @@ fun OnboardingScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = TextPrimary
         )
-        Button(
+        OutlinedButton(
             onClick = { requestIgnoreBatteryOptimizations(context) },
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PulseBlue)
+            border = BorderStroke(1.dp, BorderSubtle),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary)
         ) {
             Text("Disable Battery Optimization")
         }
@@ -113,8 +121,8 @@ fun OnboardingScreen(
 
         Text(
             "Identity: ${viewModel.publicKeyPreview}",
-            style = MaterialTheme.typography.bodyMedium,
-            color = TextPrimary.copy(alpha = 0.6f)
+            style = MaterialTheme.typography.bodySmall,
+            color = TextDim
         )
 
         Button(

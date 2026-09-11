@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.pulsenet.app.ui.components.SOSButton
 import com.pulsenet.app.ui.theme.PulseBlue
 import com.pulsenet.app.ui.theme.SOSRed
+import com.pulsenet.app.ui.theme.TextDim
 import com.pulsenet.app.ui.theme.TextPrimary
 
 @Composable
@@ -79,7 +80,7 @@ fun SOSScreen(
 
             Text(
                 "If you can't use the screen, tap the back of your phone 5 times rapidly.",
-                color = TextPrimary.copy(alpha = 0.6f),
+                color = TextDim,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 40.dp)
             )

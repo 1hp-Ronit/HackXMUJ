@@ -17,7 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pulsenet.app.domain.model.PeerNode
+import com.pulsenet.app.ui.theme.BorderSubtle
 import com.pulsenet.app.ui.theme.PulseBlue
+import com.pulsenet.app.ui.theme.TextDim
+import com.pulsenet.app.ui.theme.TextFaint
 import com.pulsenet.app.ui.theme.TextPrimary
 
 @Composable
@@ -27,7 +30,7 @@ fun PeerListSheet(peers: List<PeerNode>) {
         Text(
             "Connected via Bluetooth / Wi-Fi Direct — no internet needed",
             style = MaterialTheme.typography.bodyMedium,
-            color = TextPrimary.copy(alpha = 0.6f),
+            color = TextDim,
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
         )
 
@@ -36,13 +39,13 @@ fun PeerListSheet(peers: List<PeerNode>) {
                 "No devices connected yet. Discovery runs in short bursts to save " +
                     "battery — keep the app open nearby another PulseNet device.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary.copy(alpha = 0.7f)
+                color = TextDim
             )
         } else {
             peers.forEachIndexed { index, peer ->
                 PeerRow(peer)
                 if (index != peers.lastIndex) {
-                    HorizontalDivider(color = TextPrimary.copy(alpha = 0.08f))
+                    HorizontalDivider(color = BorderSubtle)
                 }
             }
         }
@@ -66,7 +69,7 @@ private fun PeerRow(peer: PeerNode) {
             Text(
                 "Connected ${connectedDurationLabel(peer.connectedAtEpochMs)}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary.copy(alpha = 0.5f)
+                color = TextFaint
             )
         }
     }

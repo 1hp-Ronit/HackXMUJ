@@ -1,5 +1,6 @@
 package com.pulsenet.app.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -26,8 +28,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pulsenet.app.ui.components.PulseRadar
-import com.pulsenet.app.ui.theme.PulseBlue
+import com.pulsenet.app.ui.theme.BorderSubtle
 import com.pulsenet.app.ui.theme.SOSRed
+import com.pulsenet.app.ui.theme.TextDim
 import com.pulsenet.app.ui.theme.TextPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,12 +51,12 @@ fun HomeScreen(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = { showPeerSheet = true }) {
                 Text(
-                    "${state.peers.size} peers • ${state.messageCount} messages",
-                    color = TextPrimary,
-                    style = MaterialTheme.typography.bodyLarge
+                    "${state.peers.size} peers · ${state.messageCount} messages",
+                    color = TextDim,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
-            Text("⚡ ${state.batteryPercent}%", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
+            Text("${state.batteryPercent}%", color = TextDim, style = MaterialTheme.typography.bodyMedium)
         }
 
         PulseRadar(
@@ -64,25 +67,30 @@ fun HomeScreen(
                 .padding(vertical = 24.dp)
         )
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        // SOS is the one loud element on this screen; Messages stays quiet
+        // (outlined, not filled) so the emergency action is unambiguous.
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
                 onClick = onNavigateToSOS,
-                modifier = Modifier.weight(1f).height(80.dp),
+                modifier = Modifier.weight(1f).height(72.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(containerColor = SOSRed)
             ) {
-                Text("🔴 SOS", style = MaterialTheme.typography.titleLarge)
+                Text("SOS", style = MaterialTheme.typography.titleLarge)
             }
-            Button(
+            OutlinedButton(
                 onClick = onNavigateToMessages,
-                modifier = Modifier.weight(1f).height(80.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PulseBlue)
+                modifier = Modifier.weight(1f).height(72.dp),
+                shape = MaterialTheme.shapes.medium,
+                border = BorderStroke(1.dp, BorderSubtle),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary)
             ) {
-                Text("💬 Messages", style = MaterialTheme.typography.titleLarge)
+                Text("Messages", style = MaterialTheme.typography.titleMedium)
             }
         }
 
-        TextButton(onClick = onNavigateToMap, modifier = Modifier.fillMaxWidth()) {
-            Text("🗺 View Mesh Map", color = TextPrimary, style = MaterialTheme.typography.bodyLarge)
+        TextButton(onClick = onNavigateToMap, modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            Text("View Mesh Map", color = TextDim, style = MaterialTheme.typography.bodyMedium)
         }
     }
 

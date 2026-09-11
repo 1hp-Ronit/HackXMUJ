@@ -13,8 +13,14 @@ private val PulseColorScheme = darkColorScheme(
     onBackground = TextPrimary,
     surface = SurfaceDark,
     onSurface = TextPrimary,
+    surfaceVariant = SurfaceRaised,
+    onSurfaceVariant = TextDim,
+    outline = BorderSubtle,
+    outlineVariant = BorderStrong,
     error = SOSRed,
-    onError = TextPrimary
+    onError = TextPrimary,
+    errorContainer = SOSRedMuted,
+    onErrorContainer = SOSRed
 )
 
 /** Dark-only theme: disaster scenarios don't get a light mode, and it saves OLED battery. */
