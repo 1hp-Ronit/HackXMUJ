@@ -81,7 +81,7 @@ messages from propagating forever.
 ## Project Structure
 
 ```
-hackMUJ/
+HackXMUJ/
 ├── app/                        Android app (com.pulsenet.app)
 │   └── src/main/java/com/pulsenet/app/
 │       ├── data/                Room entities/DAOs, remote API, repositories
