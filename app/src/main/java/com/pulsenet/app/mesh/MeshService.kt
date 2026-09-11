@@ -31,7 +31,6 @@ import javax.inject.Inject
 class MeshService : Service() {
 
     private companion object {
-        const val NOTIFICATION_CHANNEL_ID = "pulsenet_mesh"
         const val NOTIFICATION_ID = 1
     }
 
@@ -83,7 +82,7 @@ class MeshService : Service() {
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID,
+            MESH_NOTIFICATION_CHANNEL_ID,
             getString(R.string.mesh_service_channel_name),
             NotificationManager.IMPORTANCE_LOW
         )
@@ -91,7 +90,7 @@ class MeshService : Service() {
     }
 
     private fun buildNotification(peerCount: Int, messageCount: Int): Notification =
-        NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        NotificationCompat.Builder(this, MESH_NOTIFICATION_CHANNEL_ID)
             .setContentTitle(getString(R.string.mesh_service_notification_title))
             .setContentText("$peerCount peers nearby • $messageCount messages cached")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
