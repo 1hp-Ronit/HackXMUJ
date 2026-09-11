@@ -5,43 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PulseNet Rescue Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <h1>PULSENET RESCUE COMMAND CENTER</h1>
-    <div class="status">
-      <span id="connection-dot" class="dot"></span>
-      <span id="connection-label">Connecting…</span>
-      <span id="message-count-label">0 msgs</span>
-    </div>
-  </header>
-
-  <main class="layout">
-    <section class="map-panel">
-      <div id="map"></div>
-    </section>
-
-    <aside class="sidebar">
-      <div class="card stats-card">
-        <h2>Statistics</h2>
-        <div class="stat-row"><span>Total Messages</span><strong id="stat-total">0</strong></div>
-        <div class="stat-row"><span>Active SOS</span><strong id="stat-sos" class="sos-value">0</strong></div>
-        <div class="stat-row"><span>Nodes Seen</span><strong id="stat-nodes">0</strong></div>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-text">
+          <span class="brand-name">PulseNet</span>
+          <span class="brand-sub">Rescue Command Center</span>
+        </div>
       </div>
-
-      <div class="card sos-feed-card">
-        <h2>Live SOS Feed</h2>
-        <ul id="sos-feed"></ul>
+      <div class="status-pill" id="status-pill">
+        <span class="status-dot" id="connection-dot"></span>
+        <span id="connection-label">Connecting</span>
       </div>
-    </aside>
-  </main>
+    </header>
 
-  <footer class="ticker-wrap">
-    <div id="ticker" class="ticker"></div>
-  </footer>
+    <main class="layout">
+      <section class="map-panel">
+        <div id="map"></div>
+        <div class="legend" aria-label="Marker priority legend">
+          <span class="legend-item"><i class="legend-dot legend-dot--sos"></i>SOS</span>
+          <span class="legend-item"><i class="legend-dot legend-dot--medical"></i>Medical</span>
+          <span class="legend-item"><i class="legend-dot legend-dot--resource"></i>Resource</span>
+          <span class="legend-item"><i class="legend-dot legend-dot--general"></i>General</span>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="stat-grid">
+          <div class="stat-tile">
+            <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-label">Messages</span>
+          </div>
+          <div class="stat-tile stat-tile--sos">
+            <span class="stat-value" id="stat-sos">0</span>
+            <span class="stat-label">Active SOS</span>
+          </div>
+          <div class="stat-tile">
+            <span class="stat-value" id="stat-nodes">0</span>
+            <span class="stat-label">Nodes Seen</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Live SOS Feed</h2>
+            <span class="panel-count" id="sos-feed-count">0</span>
+          </div>
+          <ul class="feed" id="sos-feed"></ul>
+          <p class="feed-empty" id="sos-feed-empty">No active SOS signals</p>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="ticker-wrap">
+      <span class="ticker-tag">LIVE</span>
+      <div class="ticker-track">
+        <div id="ticker" class="ticker"></div>
+      </div>
+    </footer>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>

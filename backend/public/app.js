@@ -1,8 +1,8 @@
 const PRIORITY_COLORS = {
-  0: '#ff2d2d', // SOS
-  1: '#ffa726', // Medical
-  2: '#ffd54f', // Resource
-  3: '#9e9e9e' // General
+  0: '#ff3b3b', // SOS
+  1: '#ff9f45', // Medical
+  2: '#f5d547', // Resource
+  3: '#7a7f88' // General
 };
 
 const map = L.map('map', { zoomControl: true }).setView([26.9124, 75.7873], 13);
@@ -68,12 +68,18 @@ function fitToPlottedMessages() {
   map.fitBounds(L.latLngBounds(plottedLatLngs), { padding: [50, 50], maxZoom: 15 });
 }
 
+let sosFeedCount = 0;
+
 function prependSosFeed(msg) {
   const feed = document.getElementById('sos-feed');
   const li = document.createElement('li');
-  li.textContent = `🔴 ${msg.senderAlias || 'Unknown'}: "${msg.content || ''}"`;
+  li.textContent = `${msg.senderAlias || 'Unknown'}: "${msg.content || ''}"`;
   feed.prepend(li);
   while (feed.children.length > 20) feed.removeChild(feed.lastChild);
+
+  sosFeedCount += 1;
+  document.getElementById('sos-feed-count').textContent = sosFeedCount;
+  document.getElementById('sos-feed-empty').hidden = true;
 }
 
 function prependTicker(msg) {
@@ -91,7 +97,6 @@ async function refreshStats() {
     document.getElementById('stat-total').textContent = stats.totalMessages ?? 0;
     document.getElementById('stat-sos').textContent = stats.activeSOS ?? 0;
     document.getElementById('stat-nodes').textContent = stats.uniqueNodes ?? 0;
-    document.getElementById('message-count-label').textContent = `${stats.totalMessages ?? 0} msgs`;
   } catch (err) {
     console.error('Failed to refresh stats', err);
   }
