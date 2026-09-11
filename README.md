@@ -98,7 +98,7 @@ HackXMUJ/
 └── BuildPhases.md              Phase-by-phase breakdown with done-when checklists
 ```
 
-## Setup
+## Setup -:
 
 ### Android app
 
