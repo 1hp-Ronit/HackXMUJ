@@ -35,7 +35,7 @@ class SyncRepositoryTest {
     @Test
     fun flushSendsGeoJsonWithLongitudeFirst() = runTest {
         dao.insertMessage(message("msg-1", lat = 26.9124, lng = 75.7873))
-        val fakeApi = FakeAtlasApiService()
+        val fakeApi = FakeBackendApiService()
         val repository = SyncRepository(dao, fakeApi)
 
         val success = repository.flushUnsyncedMessages()
@@ -48,7 +48,7 @@ class SyncRepositoryTest {
     @Test
     fun flushMarksMessagesSyncedOnSuccess() = runTest {
         dao.insertMessage(message("msg-1"))
-        val repository = SyncRepository(dao, FakeAtlasApiService())
+        val repository = SyncRepository(dao, FakeBackendApiService())
 
         repository.flushUnsyncedMessages()
 
@@ -58,7 +58,7 @@ class SyncRepositoryTest {
     @Test
     fun flushChunksIntoBatchesOfFifty() = runTest {
         repeat(120) { dao.insertMessage(message("msg-$it")) }
-        val fakeApi = FakeAtlasApiService()
+        val fakeApi = FakeBackendApiService()
         val repository = SyncRepository(dao, fakeApi)
 
         repository.flushUnsyncedMessages()
@@ -72,7 +72,7 @@ class SyncRepositoryTest {
     @Test
     fun flushStopsAndReportsFailureOnHttpError() = runTest {
         repeat(60) { dao.insertMessage(message("msg-$it")) }
-        val fakeApi = FakeAtlasApiService(failOnCallIndex = 1)
+        val fakeApi = FakeBackendApiService(failOnCallIndex = 1)
         val repository = SyncRepository(dao, fakeApi)
 
         val success = repository.flushUnsyncedMessages()
@@ -85,7 +85,7 @@ class SyncRepositoryTest {
 
     @Test
     fun flushWithNoUnsyncedMessagesIsANoOp() = runTest {
-        val fakeApi = FakeAtlasApiService()
+        val fakeApi = FakeBackendApiService()
         val repository = SyncRepository(dao, fakeApi)
 
         val success = repository.flushUnsyncedMessages()

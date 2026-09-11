@@ -1,24 +1,24 @@
 package com.pulsenet.app.data.repository
 
-import com.pulsenet.app.data.remote.AtlasApiService
-import com.pulsenet.app.data.remote.InsertManyRequest
-import com.pulsenet.app.data.remote.InsertManyResponse
+import com.pulsenet.app.data.remote.BackendApiService
+import com.pulsenet.app.data.remote.BulkInsertRequest
+import com.pulsenet.app.data.remote.BulkInsertResponse
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Response
 
 /** [failOnCallIndex] makes the Nth call (0-indexed) return an HTTP error, to test retry paths. */
-class FakeAtlasApiService(private val failOnCallIndex: Int? = null) : AtlasApiService {
-    val receivedRequests = mutableListOf<InsertManyRequest>()
+class FakeBackendApiService(private val failOnCallIndex: Int? = null) : BackendApiService {
+    val receivedRequests = mutableListOf<BulkInsertRequest>()
     private var callCount = 0
 
-    override suspend fun insertMany(apiKey: String, request: InsertManyRequest): Response<InsertManyResponse> {
+    override suspend fun insertMessages(request: BulkInsertRequest): Response<BulkInsertResponse> {
         receivedRequests.add(request)
         val currentCall = callCount++
         return if (failOnCallIndex != null && currentCall == failOnCallIndex) {
             Response.error(500, "".toResponseBody("application/json".toMediaType()))
         } else {
-            Response.success(InsertManyResponse(insertedIds = request.documents.map { it.messageId }))
+            Response.success(BulkInsertResponse(inserted = request.documents.size))
         }
     }
 }

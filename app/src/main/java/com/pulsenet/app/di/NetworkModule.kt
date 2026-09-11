@@ -1,7 +1,7 @@
 package com.pulsenet.app.di
 
 import com.pulsenet.app.BuildConfig
-import com.pulsenet.app.data.remote.AtlasApiService
+import com.pulsenet.app.data.remote.BackendApiService
 import com.pulsenet.app.data.remote.SarvamApiService
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -38,13 +38,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAtlasApiService(moshi: Moshi, okHttpClient: OkHttpClient): AtlasApiService =
+    fun provideBackendApiService(moshi: Moshi, okHttpClient: OkHttpClient): BackendApiService =
         Retrofit.Builder()
-            .baseUrl("${BuildConfig.ATLAS_BASE_URL}/${BuildConfig.ATLAS_APP_ID}/")
+            .baseUrl(BuildConfig.BACKEND_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
-            .create(AtlasApiService::class.java)
+            .create(BackendApiService::class.java)
 
     @Provides
     @Singleton

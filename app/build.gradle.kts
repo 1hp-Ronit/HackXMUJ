@@ -29,9 +29,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "ATLAS_APP_ID", "\"${localProp("ATLAS_APP_ID")}\"")
-        buildConfigField("String", "ATLAS_API_KEY", "\"${localProp("ATLAS_API_KEY")}\"")
-        buildConfigField("String", "ATLAS_BASE_URL", "\"${localProp("ATLAS_BASE_URL")}\"")
+        buildConfigField("String", "BACKEND_BASE_URL", "\"${localProp("BACKEND_BASE_URL")}\"")
         buildConfigField("String", "SARVAM_API_KEY", "\"${localProp("SARVAM_API_KEY")}\"")
         buildConfigField("String", "SARVAM_BASE_URL", "\"${localProp("SARVAM_BASE_URL")}\"")
     }
@@ -82,6 +80,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("androidx.activity:activity-compose:1.9.1")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")

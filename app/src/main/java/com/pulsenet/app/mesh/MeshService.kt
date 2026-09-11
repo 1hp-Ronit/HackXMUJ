@@ -12,7 +12,9 @@ import androidx.core.app.NotificationCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.pulsenet.app.BuildConfig
 import com.pulsenet.app.R
+import com.pulsenet.app.data.local.DemoSeeder
 import com.pulsenet.app.data.local.UserPreferences
 import com.pulsenet.app.data.local.dao.MessageDao
 import com.pulsenet.app.sensor.DistressSensorManager
@@ -45,6 +47,7 @@ class MeshService : Service() {
     @Inject lateinit var bridgeManager: BridgeManager
     @Inject lateinit var messageDao: MessageDao
     @Inject lateinit var userPreferences: UserPreferences
+    @Inject lateinit var demoSeeder: DemoSeeder
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -62,6 +65,9 @@ class MeshService : Service() {
 
         serviceScope.launch {
             nearbyMeshManager.start(userPreferences.getAliasSnapshot())
+        }
+        if (BuildConfig.DEBUG) {
+            serviceScope.launch { demoSeeder.seedIfNeeded() }
         }
         observeMeshState()
     }

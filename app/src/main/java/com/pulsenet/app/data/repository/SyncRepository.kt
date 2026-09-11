@@ -1,12 +1,11 @@
 package com.pulsenet.app.data.repository
 
-import com.pulsenet.app.BuildConfig
 import com.pulsenet.app.data.local.dao.MessageDao
 import com.pulsenet.app.data.local.entity.MessageEntity
-import com.pulsenet.app.data.remote.AtlasApiService
-import com.pulsenet.app.data.remote.AtlasMessageDocument
+import com.pulsenet.app.data.remote.BackendApiService
+import com.pulsenet.app.data.remote.BulkInsertRequest
 import com.pulsenet.app.data.remote.GeoJsonPoint
-import com.pulsenet.app.data.remote.InsertManyRequest
+import com.pulsenet.app.data.remote.MessageDocument
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +21,7 @@ sealed interface SyncStatus {
 }
 
 /**
- * Flushes unsynced Room messages to MongoDB Atlas in batches. [BridgeFlushWorker]
+ * Flushes unsynced Room messages to the PulseNet backend in batches. [BridgeFlushWorker]
  * calls [flushUnsyncedMessages]; this class owns batching, GeoJSON conversion
  * (longitude first, per the 2dsphere index requirement), and exposes progress so
  * a notification or UI can show it.
@@ -30,13 +29,10 @@ sealed interface SyncStatus {
 @Singleton
 class SyncRepository @Inject constructor(
     private val messageDao: MessageDao,
-    private val atlasApiService: AtlasApiService
+    private val backendApiService: BackendApiService
 ) {
     private companion object {
         const val BATCH_SIZE = 50
-        const val DATABASE_NAME = "pulsenet"
-        const val COLLECTION_NAME = "messages"
-        const val DATA_SOURCE = "PulseNet"
     }
 
     private val _syncStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
@@ -62,17 +58,11 @@ class SyncRepository @Inject constructor(
 
             val documents = batch.map { message ->
                 val (translated, severity) = translate(message)
-                message.toAtlasDocument(translated, severity)
+                message.toDocument(translated, severity)
             }
-            val request = InsertManyRequest(
-                collection = COLLECTION_NAME,
-                database = DATABASE_NAME,
-                dataSource = DATA_SOURCE,
-                documents = documents
-            )
 
             val response = try {
-                atlasApiService.insertMany(BuildConfig.ATLAS_API_KEY, request)
+                backendApiService.insertMessages(BulkInsertRequest(documents))
             } catch (e: Exception) {
                 _syncStatus.value = SyncStatus.Failed(e.message ?: "Network error")
                 return false
@@ -90,8 +80,8 @@ class SyncRepository @Inject constructor(
         return true
     }
 
-    private fun MessageEntity.toAtlasDocument(translatedContent: String?, severityTag: String?) =
-        AtlasMessageDocument(
+    private fun MessageEntity.toDocument(translatedContent: String?, severityTag: String?) =
+        MessageDocument(
             messageId = messageId,
             senderAlias = senderAlias,
             senderPublicKey = senderPublicKey,
